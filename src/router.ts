@@ -5,6 +5,7 @@ import DashboardView from './views/DashboardView.vue'
 import FeedbackView from './views/FeedbackView.vue'
 import LoginView from './views/LoginView.vue'
 import ReportsView from './views/ReportsView.vue'
+import ReviewsView from './views/ReviewsView.vue'
 import SettingsView from './views/SettingsView.vue'
 import TagsView from './views/TagsView.vue'
 import UsersView from './views/UsersView.vue'
@@ -27,6 +28,7 @@ const router = createRouter({
         { path: 'tags', name: 'tags', component: TagsView },
         { path: 'users', name: 'users', component: UsersView },
         { path: 'reports', name: 'reports', component: ReportsView },
+        { path: 'reviews', name: 'reviews', component: ReviewsView },
         { path: 'feedback', name: 'feedback', component: FeedbackView },
         { path: 'settings', name: 'settings', component: SettingsView },
       ],

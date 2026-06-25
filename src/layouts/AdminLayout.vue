@@ -6,6 +6,7 @@ import {
   Expand,
   Fold,
   Message,
+  Star,
   Setting,
   User,
   Warning,
@@ -65,6 +66,10 @@ function logout() {
         <el-menu-item index="/reports">
           <el-icon><Warning /></el-icon>
           <template #title>举报管理</template>
+        </el-menu-item>
+        <el-menu-item index="/reviews">
+          <el-icon><Star /></el-icon>
+          <template #title>评价管理</template>
         </el-menu-item>
         <el-menu-item index="/feedback">
           <el-icon><Message /></el-icon>

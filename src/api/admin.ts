@@ -38,7 +38,7 @@ export interface AdminActivity {
   title: string
   creatorUserId: number
   authorName: string
-  status: 'upcoming' | 'ongoing' | 'ended' | 'hidden'
+  status: 'upcoming' | 'ongoing' | 'ended' | 'hidden' | 'cancelled'
   joinedCount: number
   pendingCount: number
   recruitCount: number
@@ -58,6 +58,17 @@ export interface AdminParticipant {
   status: string
   applicationText: string
   appliedAt: number
+}
+
+export interface AdminAuditLog {
+  id: number
+  adminUserId: number
+  adminName: string
+  actionType: string
+  reason: string
+  beforeState: Record<string, unknown>
+  afterState: Record<string, unknown>
+  createdAt: number
 }
 
 export interface AdminActivityDetail {
@@ -82,6 +93,7 @@ export interface AdminActivityDetail {
   governanceAction?: string
   governanceReason?: string
   governedAt?: number
+  auditLogs: AdminAuditLog[]
   participants: AdminParticipant[]
 }
 
@@ -123,6 +135,32 @@ export interface AdminFeedback {
   adminNote: string
   createdAt: number
   handledAt: number
+}
+
+export interface AdminReviewScore {
+  key: string
+  label: string
+  value: number
+}
+
+export interface AdminReview {
+  id: number
+  targetType: 'activity' | 'member'
+  activityId: number
+  activityTitle: string
+  reviewerUserId: number
+  reviewerName: string
+  targetId: number
+  targetName: string
+  overallScore: number
+  scores: AdminReviewScore[]
+  status: 'NORMAL' | 'EXCLUDED'
+  adminNote: string
+  handledBy?: number
+  handledByName?: string
+  createdAt: number
+  updatedAt: number
+  handledAt?: number
 }
 
 export interface PageResult<T> {
@@ -182,8 +220,24 @@ export function fetchAdminActivityDetail(id: number) {
   return http.get<never, AdminActivityDetail>(`/admin/activities/${id}`)
 }
 
-export function updateAdminActivity(id: number, action: 'hide' | 'restore' | 'force-end', reason: string) {
-  return http.post<never, AdminActivityDetail>(`/admin/activities/${id}/${action}`, { reason })
+export function updateAdminActivity(
+  id: number,
+  action: 'hide' | 'restore' | 'force-end',
+  reason: string,
+  password: string,
+) {
+  return http.post<never, AdminActivityDetail>(`/admin/activities/${id}/${action}`, { reason, password })
+}
+
+export function editAdminActivity(id: number, data: {
+  status: 'PUBLISHED' | 'HIDDEN' | 'CANCELLED'
+  startAt: number
+  endAt: number
+  locationText: string
+  reason: string
+  password: string
+}) {
+  return http.put<never, AdminActivityDetail>(`/admin/activities/${id}`, data)
 }
 
 export function updateAdminActivityTags(id: number, tagIds: number[]) {
@@ -237,4 +291,23 @@ export function fetchAdminFeedback(params: { status?: string; page: number; page
 
 export function handleAdminFeedback(id: number, status: 'RESOLVED' | 'IGNORED', reason: string) {
   return http.post(`/admin/feedback/${id}/handle`, { status, reason })
+}
+
+export function fetchAdminReviews(params: {
+  targetType?: string
+  status?: string
+  keyword?: string
+  page: number
+  pageSize: number
+}) {
+  return http.get<never, PageResult<AdminReview>>('/admin/reviews', { params })
+}
+
+export function updateAdminReviewStatus(
+  id: number,
+  status: 'NORMAL' | 'EXCLUDED',
+  reason: string,
+  password: string,
+) {
+  return http.post(`/admin/reviews/${id}/status`, { status, reason, password })
 }

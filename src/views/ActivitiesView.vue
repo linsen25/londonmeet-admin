@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Refresh, Search } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { onMounted, reactive, ref } from 'vue'
 import {
   fetchAdminActivities,
   fetchAdminActivityDetail,
   fetchAdminTags,
-  updateAdminActivity,
+  editAdminActivity,
   updateAdminActivityTags,
   type AdminActivity,
   type AdminActivityDetail,
@@ -22,6 +22,15 @@ const detail = ref<AdminActivityDetail | null>(null)
 const tags = ref<AdminTag[]>([])
 const selectedTagIds = ref<number[]>([])
 const savingTags = ref(false)
+const editOpen = ref(false)
+const editSaving = ref(false)
+const editForm = reactive({
+  status: 'PUBLISHED' as 'PUBLISHED' | 'HIDDEN' | 'CANCELLED',
+  timeRange: [] as Date[],
+  locationText: '',
+  reason: '',
+  password: '',
+})
 const query = reactive({
   keyword: '',
   status: '',
@@ -34,6 +43,7 @@ const statusMap = {
   ongoing: { text: '进行中', type: 'success' },
   ended: { text: '已结束', type: 'info' },
   hidden: { text: '已隐藏', type: 'danger' },
+  cancelled: { text: '已取消', type: 'warning' },
 } as const
 
 function statusText(status: AdminActivity['status']) {
@@ -125,23 +135,85 @@ async function saveActivityTags() {
   }
 }
 
-async function govern(action: 'hide' | 'restore' | 'force-end', label: string) {
+function openEditActivity() {
   if (!detail.value) return
+  editForm.status = (
+    ['PUBLISHED', 'HIDDEN', 'CANCELLED'].includes(detail.value.status)
+      ? detail.value.status
+      : 'PUBLISHED'
+  ) as 'PUBLISHED' | 'HIDDEN' | 'CANCELLED'
+  editForm.timeRange = [new Date(detail.value.startAt), new Date(detail.value.endAt)]
+  editForm.locationText = detail.value.locationText || ''
+  editForm.reason = ''
+  editForm.password = ''
+  editOpen.value = true
+}
+
+async function saveActivityEdit() {
+  if (!detail.value) return
+  if (editForm.timeRange.length !== 2) {
+    ElMessage.warning('请选择活动开始和结束时间')
+    return
+  }
+  if (!editForm.locationText.trim()) {
+    ElMessage.warning('请填写活动地址')
+    return
+  }
+  if (!editForm.reason.trim()) {
+    ElMessage.warning('请填写修改原因')
+    return
+  }
+  if (!editForm.password) {
+    ElMessage.warning('请输入管理员密码')
+    return
+  }
+
+  editSaving.value = true
   try {
-    const { value } = await ElMessageBox.prompt(`请输入“${label}”的处理原因`, '确认管理操作', {
-      confirmButtonText: '确认执行',
-      cancelButtonText: '取消',
-      inputType: 'textarea',
-      inputValidator: (text) => Boolean(text?.trim()) || '必须填写处理原因',
+    detail.value = await editAdminActivity(detail.value.id, {
+      status: editForm.status,
+      startAt: editForm.timeRange[0].getTime(),
+      endAt: editForm.timeRange[1].getTime(),
+      locationText: editForm.locationText.trim(),
+      reason: editForm.reason.trim(),
+      password: editForm.password,
     })
-    detail.value = await updateAdminActivity(detail.value.id, action, value.trim())
-    ElMessage.success(`${label}成功`)
+    editOpen.value = false
+    ElMessage.success('活动信息已更新并记录操作日志')
     await load()
   } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error instanceof Error ? error.message : '操作失败')
-    }
+    ElMessage.error(error instanceof Error ? error.message : '活动修改失败')
+  } finally {
+    editSaving.value = false
   }
+}
+
+function auditActionText(action: string) {
+  return {
+    ACTIVITY_UPDATE: '修改活动信息',
+    ACTIVITY_FORCE_END: '强制结束',
+    ACTIVITY_HIDE: '隐藏活动',
+    ACTIVITY_RESTORE: '恢复活动',
+  }[action] || action
+}
+
+function auditChanges(log: AdminActivityDetail['auditLogs'][number]) {
+  const before = log.beforeState || {}
+  const after = log.afterState || {}
+  const changes: string[] = []
+  if (before.status !== after.status && after.status) {
+    changes.push(`状态：${String(before.status || '-')} → ${String(after.status)}`)
+  }
+  if (before.startAt !== after.startAt && after.startAt) {
+    changes.push(`开始时间：${formatDate(Number(before.startAt))} → ${formatDate(Number(after.startAt))}`)
+  }
+  if (before.endAt !== after.endAt && after.endAt) {
+    changes.push(`结束时间：${formatDate(Number(before.endAt))} → ${formatDate(Number(after.endAt))}`)
+  }
+  if (before.locationText !== after.locationText && after.locationText) {
+    changes.push(`地址：${String(before.locationText || '-')} → ${String(after.locationText)}`)
+  }
+  return changes
 }
 
 onMounted(load)
@@ -258,19 +330,7 @@ onMounted(load)
               <p>活动 ID {{ detail.id }} · 发起人 {{ detail.authorName }}（用户 {{ detail.creatorUserId }}）</p>
             </div>
             <div class="govern-actions">
-              <el-button
-                v-if="detail.status !== 'HIDDEN'"
-                type="danger"
-                plain
-                @click="govern('hide', '隐藏活动')"
-              >隐藏活动</el-button>
-              <el-button v-else type="success" plain @click="govern('restore', '恢复活动')">恢复活动</el-button>
-              <el-button
-                v-if="detail.timeStatus !== 'ended'"
-                type="warning"
-                plain
-                @click="govern('force-end', '强制结束')"
-              >强制结束</el-button>
+              <el-button type="primary" @click="openEditActivity">编辑活动</el-button>
             </div>
           </div>
 
@@ -325,6 +385,28 @@ onMounted(load)
             </el-descriptions-item>
           </el-descriptions>
 
+          <h3 class="section-title">管理修改记录（{{ detail.auditLogs?.length || 0 }}）</h3>
+          <el-empty v-if="!detail.auditLogs?.length" description="暂无管理修改记录" :image-size="72" />
+          <el-timeline v-else class="audit-timeline">
+            <el-timeline-item
+              v-for="log in detail.auditLogs"
+              :key="log.id"
+              :timestamp="formatDate(log.createdAt)"
+              placement="top"
+            >
+              <div class="audit-card">
+                <div class="audit-title">
+                  <strong>{{ auditActionText(log.actionType) }}</strong>
+                  <span>{{ log.adminName || `管理员 ${log.adminUserId}` }}</span>
+                </div>
+                <div class="audit-reason">原因：{{ log.reason }}</div>
+                <ul v-if="auditChanges(log).length" class="audit-changes">
+                  <li v-for="change in auditChanges(log)" :key="change">{{ change }}</li>
+                </ul>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+
           <h3 class="section-title">报名与参与者（{{ detail.participants.length }}）</h3>
           <el-table :data="detail.participants" border>
             <el-table-column label="用户" min-width="160">
@@ -344,6 +426,62 @@ onMounted(load)
         </template>
       </div>
     </el-drawer>
+
+    <el-dialog
+      v-model="editOpen"
+      title="编辑活动"
+      width="620px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-position="top">
+        <el-form-item label="活动状态">
+          <el-select v-model="editForm.status" style="width: 100%">
+            <el-option label="正常发布" value="PUBLISHED" />
+            <el-option label="隐藏" value="HIDDEN" />
+            <el-option label="取消" value="CANCELLED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开始和结束时间">
+          <el-date-picker
+            v-model="editForm.timeRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            format="YYYY-MM-DD HH:mm"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="活动地址">
+          <el-input v-model="editForm.locationText" maxlength="500" show-word-limit />
+        </el-form-item>
+        <el-form-item label="修改原因">
+          <el-input
+            v-model="editForm.reason"
+            type="textarea"
+            :rows="3"
+            maxlength="500"
+            show-word-limit
+            placeholder="该内容会永久记录在管理修改记录中"
+          />
+        </el-form-item>
+        <el-form-item label="管理员密码">
+          <el-input
+            v-model="editForm.password"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            placeholder="重新输入管理员密码以确认修改"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editOpen = false">取消</el-button>
+        <el-button type="primary" :loading="editSaving" @click="saveActivityEdit">
+          验证密码并保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -381,4 +519,10 @@ onMounted(load)
 .participant-user { display: flex; align-items: center; gap: 10px; }
 .participant-user div { display: flex; flex-direction: column; gap: 3px; }
 .participant-user span { color: #929aab; font-size: 11px; }
+.audit-timeline { margin-top: 16px; }
+.audit-card { padding: 14px 16px; border: 1px solid #e9edf3; border-radius: 12px; background: #fafbfc; }
+.audit-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.audit-title span { color: #8a93a5; font-size: 12px; }
+.audit-reason { margin-top: 8px; color: #525c70; font-size: 13px; }
+.audit-changes { margin: 10px 0 0; padding-left: 18px; color: #626c7f; font-size: 12px; line-height: 1.8; }
 </style>
