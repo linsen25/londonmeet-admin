@@ -45,16 +45,16 @@ onMounted(async () => {
         <div class="setting-icon green"><el-icon><Lock /></el-icon></div>
         <div>
           <h3>清理方式</h3>
-          <strong>30天后清理</strong>
-          <p>每天自动检查过期活动，不在服务器保存额外的报告副本。</p>
+          <strong>清理重资源</strong>
+          <p>30天后清理图片、二维码、报名与举报明细，活动骨架和评价永久保留。</p>
         </div>
       </section>
     </div>
 
     <el-alert
       class="notice"
-      title="当前保留时间固定为30天"
-      description="请在需要时前往数据概览下载近30天Excel，并自行保存到本地电脑。"
+      title="评价记录永久保留，综合评分仅计算最近30天"
+      description="活动详情重资源会在30天后清理；需要完整运营数据时请及时下载Excel。"
       type="info"
       :closable="false"
       show-icon

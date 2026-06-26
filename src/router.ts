@@ -9,6 +9,8 @@ import ReviewsView from './views/ReviewsView.vue'
 import SettingsView from './views/SettingsView.vue'
 import TagsView from './views/TagsView.vue'
 import UsersView from './views/UsersView.vue'
+import ActivityAnalyticsView from './views/ActivityAnalyticsView.vue'
+import UserAnalyticsView from './views/UserAnalyticsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -24,6 +26,8 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/dashboard' },
         { path: 'dashboard', name: 'dashboard', component: DashboardView },
+        { path: 'analytics/activities', name: 'activity-analytics', component: ActivityAnalyticsView },
+        { path: 'analytics/users', name: 'user-analytics', component: UserAnalyticsView },
         { path: 'activities', name: 'activities', component: ActivitiesView },
         { path: 'tags', name: 'tags', component: TagsView },
         { path: 'users', name: 'users', component: UsersView },

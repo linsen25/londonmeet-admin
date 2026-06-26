@@ -10,6 +10,7 @@ import {
   Setting,
   User,
   Warning,
+  TrendCharts,
 } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -51,6 +52,14 @@ function logout() {
           <el-icon><DataAnalysis /></el-icon>
           <template #title>数据概览</template>
         </el-menu-item>
+        <el-sub-menu index="/analytics">
+          <template #title>
+            <el-icon><TrendCharts /></el-icon>
+            <span>数据分析</span>
+          </template>
+          <el-menu-item index="/analytics/activities">活动分析</el-menu-item>
+          <el-menu-item index="/analytics/users">用户分析</el-menu-item>
+        </el-sub-menu>
         <el-menu-item index="/activities">
           <el-icon><Calendar /></el-icon>
           <template #title>活动管理</template>
@@ -65,7 +74,7 @@ function logout() {
         </el-menu-item>
         <el-menu-item index="/reports">
           <el-icon><Warning /></el-icon>
-          <template #title>举报管理</template>
+          <template #title>治理中心</template>
         </el-menu-item>
         <el-menu-item index="/reviews">
           <el-icon><Star /></el-icon>

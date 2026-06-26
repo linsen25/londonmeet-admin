@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, reactive, ref } from 'vue'
-import { fetchAdminReports, handleAdminReport, type AdminReport } from '../api/admin'
+import {
+  fetchAdminAppeals,
+  fetchAdminReports,
+  handleAdminAppeal,
+  handleAdminReport,
+  type AdminFeedback,
+  type AdminReport,
+} from '../api/admin'
 
 const loading = ref(false)
 const rows = ref<AdminReport[]>([])
+const appealRows = ref<AdminFeedback[]>([])
 const total = ref(0)
+const activeTab = ref<'reports' | 'appeals'>('reports')
 const query = reactive({ status: 'PENDING', page: 1, pageSize: 20 })
 
 function formatDate(value: number) {
@@ -15,12 +24,19 @@ function formatDate(value: number) {
 async function load() {
   loading.value = true
   try {
-    const result = await fetchAdminReports({
-      status: query.status || undefined,
-      page: query.page,
-      pageSize: query.pageSize,
-    })
-    rows.value = result.list
+    const result = activeTab.value === 'reports'
+      ? await fetchAdminReports({
+          status: query.status || undefined,
+          page: query.page,
+          pageSize: query.pageSize,
+        })
+      : await fetchAdminAppeals({
+          status: query.status || undefined,
+          page: query.page,
+          pageSize: query.pageSize,
+        })
+    if (activeTab.value === 'reports') rows.value = result.list as AdminReport[]
+    else appealRows.value = result.list as AdminFeedback[]
     total.value = result.total
   } finally {
     loading.value = false
@@ -41,21 +57,56 @@ async function handle(row: AdminReport, status: 'RESOLVED' | 'DISMISSED', label:
   }
 }
 
+function changeTab(tab: 'reports' | 'appeals') {
+  activeTab.value = tab
+  query.status = 'PENDING'
+  query.page = 1
+  load()
+}
+
+async function handleAppeal(
+  row: AdminFeedback,
+  status: 'APPROVED' | 'REJECTED',
+  label: string,
+) {
+  try {
+    const { value } = await ElMessageBox.prompt(`填写“${label}”的处理说明`, '处理账号申诉', {
+      inputType: 'textarea',
+      inputValidator: (text) => Boolean(text?.trim()) || '必须填写处理说明',
+    })
+    await handleAdminAppeal(row.id, status, value.trim())
+    ElMessage.success(status === 'APPROVED' ? '申诉已通过，账号已恢复' : '申诉已驳回')
+    await load()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') ElMessage.error('处理失败')
+  }
+}
+
 onMounted(load)
 </script>
 
 <template>
   <div>
-    <h1 class="page-title">举报管理</h1>
-    <p class="page-subtitle">举报记录绑定活动 ID 和用户 ID，不受昵称修改影响。</p>
+    <h1 class="page-title">治理中心</h1>
+    <p class="page-subtitle">分别处理用户举报和被禁用账号的申诉。</p>
+    <el-tabs :model-value="activeTab" class="govern-tabs" @tab-change="changeTab">
+      <el-tab-pane label="举报处理" name="reports" />
+      <el-tab-pane label="账号申诉" name="appeals" />
+    </el-tabs>
     <section class="report-filter panel">
       <el-select v-model="query.status" clearable placeholder="全部状态" @change="query.page = 1; load()">
         <el-option label="待处理" value="PENDING" />
-        <el-option label="已成立" value="RESOLVED" />
-        <el-option label="不成立" value="DISMISSED" />
+        <template v-if="activeTab === 'reports'">
+          <el-option label="已成立" value="RESOLVED" />
+          <el-option label="不成立" value="DISMISSED" />
+        </template>
+        <template v-else>
+          <el-option label="已通过" value="APPROVED" />
+          <el-option label="已驳回" value="REJECTED" />
+        </template>
       </el-select>
     </section>
-    <section class="panel report-table">
+    <section v-if="activeTab === 'reports'" class="panel report-table">
       <el-table v-loading="loading" :data="rows">
         <el-table-column label="活动" min-width="190">
           <template #default="{ row }"><strong>{{ row.activityTitle }}</strong><div class="muted">活动 {{ row.activityId }}</div></template>
@@ -89,11 +140,44 @@ onMounted(load)
           layout="prev, pager, next" @current-change="load" />
       </div>
     </section>
+    <section v-else class="panel report-table">
+      <el-table v-loading="loading" :data="appealRows">
+        <el-table-column label="申诉用户" min-width="190">
+          <template #default="{ row }">
+            <strong>{{ row.nickname }}（{{ row.userId }}）</strong>
+            <div class="muted">账号状态：{{ row.userStatus === 'ACTIVE' ? '正常' : '已禁用' }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="disableReason" label="原禁用原因" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="content" label="申诉说明" min-width="300" show-overflow-tooltip />
+        <el-table-column label="状态" width="105">
+          <template #default="{ row }"><el-tag>{{ row.status }}</el-tag></template>
+        </el-table-column>
+        <el-table-column label="提交时间" width="150">
+          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <template v-if="row.status === 'PENDING'">
+              <el-button link type="success" @click="handleAppeal(row, 'APPROVED', '通过申诉')">通过并解禁</el-button>
+              <el-button link type="danger" @click="handleAppeal(row, 'REJECTED', '驳回申诉')">驳回</el-button>
+            </template>
+            <span v-else class="muted">{{ row.adminNote || '已处理' }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="pagination">
+        <span>共 {{ total }} 条申诉</span>
+        <el-pagination v-model:current-page="query.page" :page-size="query.pageSize" :total="total"
+          layout="prev, pager, next" @current-change="load" />
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .report-filter { margin-top: 24px; padding: 16px; width: 220px; }
+.govern-tabs { margin-top: 18px; }
 .report-table { margin-top: 16px; padding: 8px 18px 18px; }
 .muted { margin-top: 5px; color: #929aab; font-size: 12px; }
 .pagination { padding-top: 18px; display: flex; justify-content: space-between; color: #8b93a3; font-size: 12px; }

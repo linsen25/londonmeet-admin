@@ -14,7 +14,75 @@ export interface DashboardData {
   upcomingActivityCount: number
   ongoingActivityCount: number
   endedActivityCount: number
+  hiddenActivityCount: number
+  cancelledActivityCount: number
+  newUserCount: number
+  activeUserCount: number
+  newActivityCount: number
+  periodRegistrationCount: number
+  approvedRegistrationCount: number
+  cancelledRegistrationCount: number
+  pendingAppealCount: number
+  pendingReviewCount: number
   activityTrend: Array<{ date: string; count: number }>
+  dailyTrend: Array<{
+    date: string
+    newUsers: number
+    activeUsers: number
+    activities: number
+    registrations: number
+    approved: number
+  }>
+}
+
+export interface ActivityAnalyticsItem {
+  activityId: number
+  title: string
+  creatorName: string
+  tags: string
+  exposureUsers: number
+  detailUsers: number
+  favoriteUsers: number
+  applicationCount: number
+  approvedCount: number
+  joinedGroupCount: number
+  groupQrUsers: number
+  cancelledCount: number
+  reviewCount: number
+  averageRating?: number
+  reportCount: number
+  exposureToDetailRate: number
+  detailToApplyRate: number
+  approvalRate: number
+  groupJoinRate: number
+  groupQrViewRate: number
+}
+
+export interface ActivityAnalyticsData {
+  startDate: string
+  endDate: string
+  total: number
+  list: ActivityAnalyticsItem[]
+}
+
+export interface UserAnalyticsData {
+  startDate: string
+  endDate: string
+  newUserCount: number
+  activeUserCount: number
+  creatorUserCount: number
+  applicantUserCount: number
+  creatorAndApplicantCount: number
+  inactiveUserCount: number
+  applicationsPerApplicant: number
+  dailyTrend: Array<{
+    date: string
+    newUsers: number
+    activeUsers: number
+    activities: number
+    applications: number
+    approved: number
+  }>
 }
 
 export interface AdminSettings {
@@ -129,6 +197,9 @@ export interface AdminFeedback {
   userId: number
   nickname: string
   avatarUrl: string
+  type?: 'FEEDBACK' | 'ACCOUNT_APPEAL'
+  userStatus?: 'ACTIVE' | 'DISABLED'
+  disableReason?: string
   subject: string
   content: string
   status: 'PENDING' | 'RESOLVED' | 'IGNORED'
@@ -154,13 +225,32 @@ export interface AdminReview {
   targetName: string
   overallScore: number
   scores: AdminReviewScore[]
-  status: 'NORMAL' | 'EXCLUDED'
+  reason?: string
+  batchGood?: boolean
+  status: 'PENDING' | 'NORMAL' | 'EXCLUDED'
   adminNote: string
   handledBy?: number
   handledByName?: string
   createdAt: number
   updatedAt: number
   handledAt?: number
+}
+
+export interface AdminReviewActivity {
+  activityId: number
+  activityTitle: string
+  creatorUserId: number
+  creatorName: string
+  activityAverage?: number
+  activityReviewCount: number
+  memberReviewCount: number
+  pendingCount: number
+  participantCount: number
+  participantReviewedCount: number
+  creatorRecentAverage?: number
+  creatorRecentReviewCount: number
+  creatorRecentDimensions: Record<string, number>
+  endAt: number
 }
 
 export interface PageResult<T> {
@@ -181,17 +271,33 @@ export function loginAdmin(username: string, password: string) {
   return http.post<never, AdminLoginResult>('/admin/auth/login', { username, password })
 }
 
-export function fetchDashboard() {
-  return http.get<never, DashboardData>('/admin/dashboard')
+export function fetchDashboard(days = 30) {
+  return http.get<never, DashboardData>('/admin/dashboard', { params: { days } })
+}
+
+export function fetchActivityAnalytics(params: {
+  startDate: string
+  endDate: string
+  page: number
+  pageSize: number
+}) {
+  return http.get<never, ActivityAnalyticsData>('/admin/analytics/activities', { params })
+}
+
+export function fetchUserAnalytics(params: { startDate: string; endDate: string }) {
+  return http.get<never, UserAnalyticsData>('/admin/analytics/users', { params })
 }
 
 export function fetchAdminSettings() {
   return http.get<never, AdminSettings>('/admin/settings')
 }
 
-export async function downloadRecentReport() {
+export async function downloadRecentReport(startDate?: string, endDate?: string) {
   const token = localStorage.getItem('admin_token')
-  const response = await fetch('/api/admin/dashboard/export', {
+  const params = new URLSearchParams()
+  if (startDate) params.set('startDate', startDate)
+  if (endDate) params.set('endDate', endDate)
+  const response = await fetch(`/api/admin/dashboard/export?${params.toString()}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
   if (!response.ok) throw new Error('下载报告失败')
@@ -200,7 +306,7 @@ export async function downloadRecentReport() {
   const anchor = document.createElement('a')
   const date = new Date().toISOString().slice(0, 10)
   anchor.href = url
-  anchor.download = `晚些去哪里呀-近30天数据-${date}.xlsx`
+  anchor.download = `晚些去哪里呀-数据报告-${startDate || '近30天'}-${endDate || date}.xlsx`
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
@@ -220,15 +326,6 @@ export function fetchAdminActivityDetail(id: number) {
   return http.get<never, AdminActivityDetail>(`/admin/activities/${id}`)
 }
 
-export function updateAdminActivity(
-  id: number,
-  action: 'hide' | 'restore' | 'force-end',
-  reason: string,
-  password: string,
-) {
-  return http.post<never, AdminActivityDetail>(`/admin/activities/${id}/${action}`, { reason, password })
-}
-
 export function editAdminActivity(id: number, data: {
   status: 'PUBLISHED' | 'HIDDEN' | 'CANCELLED'
   startAt: number
@@ -240,8 +337,8 @@ export function editAdminActivity(id: number, data: {
   return http.put<never, AdminActivityDetail>(`/admin/activities/${id}`, data)
 }
 
-export function updateAdminActivityTags(id: number, tagIds: number[]) {
-  return http.put<never, AdminActivityDetail>(`/admin/activities/${id}/tags`, { tagIds })
+export function updateAdminActivityTags(id: number, tagIds: number[], reason: string) {
+  return http.put<never, AdminActivityDetail>(`/admin/activities/${id}/tags`, { tagIds, reason })
 }
 
 export function fetchAdminTags() {
@@ -266,6 +363,18 @@ export function fetchAdminReports(params: { status?: string; page: number; pageS
 
 export function handleAdminReport(id: number, status: 'RESOLVED' | 'DISMISSED', reason: string) {
   return http.post(`/admin/reports/${id}/handle`, { status, reason })
+}
+
+export function fetchAdminAppeals(params: { status?: string; page?: number; pageSize?: number }) {
+  return http.get<never, PageResult<AdminFeedback>>('/admin/appeals', { params })
+}
+
+export function handleAdminAppeal(
+  id: number,
+  status: 'APPROVED' | 'REJECTED',
+  reason: string,
+) {
+  return http.post(`/admin/appeals/${id}/handle`, { status, reason })
 }
 
 export function fetchAdminUsers(params: {
@@ -293,14 +402,18 @@ export function handleAdminFeedback(id: number, status: 'RESOLVED' | 'IGNORED', 
   return http.post(`/admin/feedback/${id}/handle`, { status, reason })
 }
 
-export function fetchAdminReviews(params: {
+export function fetchAdminReviewActivities(params: {
   targetType?: string
   status?: string
   keyword?: string
   page: number
   pageSize: number
 }) {
-  return http.get<never, PageResult<AdminReview>>('/admin/reviews', { params })
+  return http.get<never, PageResult<AdminReviewActivity>>('/admin/review-activities', { params })
+}
+
+export function fetchAdminActivityReviews(activityId: number) {
+  return http.get<never, PageResult<AdminReview>>(`/admin/review-activities/${activityId}`)
 }
 
 export function updateAdminReviewStatus(

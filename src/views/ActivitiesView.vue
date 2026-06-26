@@ -21,6 +21,7 @@ const detailLoading = ref(false)
 const detail = ref<AdminActivityDetail | null>(null)
 const tags = ref<AdminTag[]>([])
 const selectedTagIds = ref<number[]>([])
+const tagReason = ref('')
 const savingTags = ref(false)
 const editOpen = ref(false)
 const editSaving = ref(false)
@@ -59,6 +60,7 @@ function governanceActionText(action?: string) {
     ACTIVITY_FORCE_END: '强制结束',
     ACTIVITY_HIDE: '隐藏活动',
     ACTIVITY_RESTORE: '恢复活动',
+    ACTIVITY_TAGS_UPDATE: '修改活动标签',
   }[action || ''] || action || '管理操作'
 }
 
@@ -112,6 +114,7 @@ async function openDetail(row: AdminActivity) {
     detail.value = activityDetail
     tags.value = availableTags
     selectedTagIds.value = [...(activityDetail.tagIds || [])]
+    tagReason.value = ''
   } finally {
     detailLoading.value = false
   }
@@ -123,11 +126,20 @@ async function saveActivityTags() {
     ElMessage.warning('请选择1至4个标签')
     return
   }
+  if (!tagReason.value.trim()) {
+    ElMessage.warning('请填写标签修改原因')
+    return
+  }
   savingTags.value = true
   try {
-    detail.value = await updateAdminActivityTags(detail.value.id, selectedTagIds.value)
+    detail.value = await updateAdminActivityTags(
+      detail.value.id,
+      selectedTagIds.value,
+      tagReason.value.trim(),
+    )
     selectedTagIds.value = [...(detail.value.tagIds || [])]
-    ElMessage.success('活动标签已更新')
+    tagReason.value = ''
+    ElMessage.success('活动标签已更新并通知发起人')
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '标签更新失败')
   } finally {
@@ -179,7 +191,7 @@ async function saveActivityEdit() {
       password: editForm.password,
     })
     editOpen.value = false
-    ElMessage.success('活动信息已更新并记录操作日志')
+    ElMessage.success('活动信息已更新并通知发起人')
     await load()
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '活动修改失败')
@@ -194,6 +206,7 @@ function auditActionText(action: string) {
     ACTIVITY_FORCE_END: '强制结束',
     ACTIVITY_HIDE: '隐藏活动',
     ACTIVITY_RESTORE: '恢复活动',
+    ACTIVITY_TAGS_UPDATE: '修改活动标签',
   }[action] || action
 }
 
@@ -212,6 +225,11 @@ function auditChanges(log: AdminActivityDetail['auditLogs'][number]) {
   }
   if (before.locationText !== after.locationText && after.locationText) {
     changes.push(`地址：${String(before.locationText || '-')} → ${String(after.locationText)}`)
+  }
+  if (JSON.stringify(before.tags || []) !== JSON.stringify(after.tags || [])) {
+    changes.push(
+      `标签：${(before.tags as string[] || []).join('、') || '无'} → ${(after.tags as string[] || []).join('、') || '无'}`,
+    )
   }
   return changes
 }
@@ -241,6 +259,8 @@ onMounted(load)
         <el-option label="未开始" value="upcoming" />
         <el-option label="进行中" value="ongoing" />
         <el-option label="已结束" value="ended" />
+        <el-option label="已隐藏" value="hidden" />
+        <el-option label="已取消" value="cancelled" />
       </el-select>
       <el-button type="primary" class="search-button" @click="search">查询</el-button>
       <el-button @click="reset">重置</el-button>
@@ -373,6 +393,13 @@ onMounted(load)
                 >保存标签</el-button>
                 <span>最多4个</span>
               </div>
+              <el-input
+                v-model="tagReason"
+                class="tag-reason-input"
+                maxlength="500"
+                show-word-limit
+                placeholder="填写标签修改原因；保存后会通知活动发起人"
+              />
             </el-descriptions-item>
             <el-descriptions-item
               v-if="detail.governanceReason"
@@ -462,7 +489,7 @@ onMounted(load)
             :rows="3"
             maxlength="500"
             show-word-limit
-            placeholder="该内容会永久记录在管理修改记录中"
+            placeholder="该内容会记录在管理修改记录中，并作为通知发送给活动发起人"
           />
         </el-form-item>
         <el-form-item label="管理员密码">
@@ -505,6 +532,7 @@ onMounted(load)
 .report-pill { color: #778095; font-size: 12px; }
 .activity-tag-editor { display: flex; align-items: center; gap: 10px; }
 .activity-tag-editor > span { color: #8a93a5; font-size: 12px; }
+.tag-reason-input { margin-top: 10px; width: 100%; }
 .pagination { padding-top: 18px; display: flex; align-items: center; justify-content: space-between; color: #8b93a3; font-size: 12px; }
 .detail-wrap { min-height: 420px; }
 .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
