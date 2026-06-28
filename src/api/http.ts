@@ -7,9 +7,11 @@ interface ApiResponse<T> {
 }
 
 const http = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 15000,
 })
+
+export const apiBaseURL = (http.defaults.baseURL || '/api').replace(/\/+$/, '')
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('admin_token')

@@ -86,7 +86,7 @@ onMounted(load)
     <h1 class="page-title">用户管理</h1>
     <p class="page-subtitle">查看用户活动记录、被举报次数和账号状态。</p>
     <section class="user-filter panel">
-      <el-input v-model="query.keyword" clearable :prefix-icon="Search" placeholder="搜索昵称或用户 ID" @keyup.enter="query.page=1; load()" />
+      <el-input v-model="query.keyword" clearable :prefix-icon="Search" placeholder="搜索昵称或用户ID" @keyup.enter="query.page=1; load()" />
       <el-select v-model="query.status" clearable placeholder="全部状态">
         <el-option label="正常" value="ACTIVE" />
         <el-option label="已禁用" value="DISABLED" />
@@ -97,7 +97,10 @@ onMounted(load)
       <el-table v-loading="loading" :data="rows">
         <el-table-column label="用户" min-width="190">
           <template #default="{ row }">
-            <div class="user-cell"><el-avatar :src="row.avatarUrl" /><div><strong>{{ row.nickname }}</strong><span>ID {{ row.id }}</span></div></div>
+            <div class="user-cell">
+              <el-avatar :src="row.avatarUrl" />
+              <div><strong>{{ row.nickname }}</strong><span>用户ID {{ row.publicId }}</span></div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="账号状态" width="105">

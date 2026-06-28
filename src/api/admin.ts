@@ -1,4 +1,4 @@
-import http from './http'
+import http, { apiBaseURL } from './http'
 
 export interface AdminLoginResult {
   token: string
@@ -182,6 +182,7 @@ export interface AdminReport {
 
 export interface AdminUser {
   id: number
+  publicId: string
   nickname: string
   avatarUrl: string
   status: string
@@ -297,7 +298,7 @@ export async function downloadRecentReport(startDate?: string, endDate?: string)
   const params = new URLSearchParams()
   if (startDate) params.set('startDate', startDate)
   if (endDate) params.set('endDate', endDate)
-  const response = await fetch(`/api/admin/dashboard/export?${params.toString()}`, {
+  const response = await fetch(`${apiBaseURL}/admin/dashboard/export?${params.toString()}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
   if (!response.ok) throw new Error('下载报告失败')

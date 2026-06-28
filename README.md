@@ -24,8 +24,29 @@ npm run build
 
 Static deployment output is generated in `dist/`.
 
-## Deployment
+## Deployment on Render
 
-Deploy the `dist/` directory to a static hosting service and route `/api` to the deployed LondonMeet backend, or configure the production API base URL in your hosting environment.
+Deploy as a static site. Use `admin-web` as the root directory.
+
+Build command:
+
+```bash
+npm ci && npm run build
+```
+
+Publish directory:
+
+```text
+dist
+```
+
+Production environment variable:
+
+```text
+VITE_API_BASE_URL=https://your-backend-domain.onrender.com/api
+```
+
+For Render Blueprint deploys, this directory includes `render.yaml`. Set the
+`VITE_API_BASE_URL` value in Render after creating the service.
 
 This repository is independent from the mini program and backend repositories.

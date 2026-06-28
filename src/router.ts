@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import ActivitiesView from './views/ActivitiesView.vue'
 import DashboardView from './views/DashboardView.vue'
@@ -12,8 +12,29 @@ import UsersView from './views/UsersView.vue'
 import ActivityAnalyticsView from './views/ActivityAnalyticsView.vue'
 import UserAnalyticsView from './views/UserAnalyticsView.vue'
 
+function clearAdminSession() {
+  localStorage.removeItem('admin_token')
+  localStorage.removeItem('admin_username')
+}
+
+function isJwtExpired(token: string) {
+  try {
+    const payloadSegment = token.split('.')[1]
+    const base64 = payloadSegment
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(payloadSegment.length / 4) * 4, '=')
+    const payload = JSON.parse(atob(base64)) as {
+      exp?: number
+    }
+    return !payload.exp || payload.exp * 1000 <= Date.now()
+  } catch {
+    return true
+  }
+}
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/login',
@@ -42,6 +63,10 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('admin_token')
+  if (token && isJwtExpired(token)) {
+    clearAdminSession()
+    if (to.name !== 'login') return { name: 'login' }
+  }
   if (to.name !== 'login' && !token) return { name: 'login' }
   if (to.name === 'login' && token) return { name: 'dashboard' }
 })
