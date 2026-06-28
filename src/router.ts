@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import ActivitiesView from './views/ActivitiesView.vue'
 import DashboardView from './views/DashboardView.vue'
@@ -33,32 +33,34 @@ function isJwtExpired(token: string) {
   }
 }
 
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginView,
+  },
+  {
+    path: '/',
+    component: AdminLayout,
+    children: [
+      { path: '', redirect: '/dashboard' },
+      { path: 'dashboard', name: 'dashboard', component: DashboardView },
+      { path: 'analytics/activities', name: 'activity-analytics', component: ActivityAnalyticsView },
+      { path: 'analytics/users', name: 'user-analytics', component: UserAnalyticsView },
+      { path: 'activities', name: 'activities', component: ActivitiesView },
+      { path: 'tags', name: 'tags', component: TagsView },
+      { path: 'users', name: 'users', component: UsersView },
+      { path: 'reports', name: 'reports', component: ReportsView },
+      { path: 'reviews', name: 'reviews', component: ReviewsView },
+      { path: 'feedback', name: 'feedback', component: FeedbackView },
+      { path: 'settings', name: 'settings', component: SettingsView },
+    ],
+  },
+]
+
 const router = createRouter({
   history: createWebHashHistory(),
-  routes: [
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-    },
-    {
-      path: '/',
-      component: AdminLayout,
-      children: [
-        { path: '', redirect: '/dashboard' },
-        { path: 'dashboard', name: 'dashboard', component: DashboardView },
-        { path: 'analytics/activities', name: 'activity-analytics', component: ActivityAnalyticsView },
-        { path: 'analytics/users', name: 'user-analytics', component: UserAnalyticsView },
-        { path: 'activities', name: 'activities', component: ActivitiesView },
-        { path: 'tags', name: 'tags', component: TagsView },
-        { path: 'users', name: 'users', component: UsersView },
-        { path: 'reports', name: 'reports', component: ReportsView },
-        { path: 'reviews', name: 'reviews', component: ReviewsView },
-        { path: 'feedback', name: 'feedback', component: FeedbackView },
-        { path: 'settings', name: 'settings', component: SettingsView },
-      ],
-    },
-  ],
+  routes,
 })
 
 router.beforeEach((to) => {
