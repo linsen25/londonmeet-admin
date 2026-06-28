@@ -113,8 +113,8 @@ onMounted(load)
         </el-table-column>
         <el-table-column label="举报关系" min-width="210">
           <template #default="{ row }">
-            <div>{{ row.reporterName }}（{{ row.reporterUserId }}）</div>
-            <div class="muted">举报 {{ row.reportedUserName }}（{{ row.reportedUserId }}）</div>
+            <div>{{ row.reporterName }}（{{ row.reporterDisplayId }}）</div>
+            <div class="muted">举报 {{ row.reportedUserName }}（{{ row.reportedDisplayId }}）</div>
           </template>
         </el-table-column>
         <el-table-column prop="reason" label="举报原因" min-width="260" />
@@ -144,7 +144,7 @@ onMounted(load)
       <el-table v-loading="loading" :data="appealRows">
         <el-table-column label="申诉用户" min-width="190">
           <template #default="{ row }">
-            <strong>{{ row.nickname }}（{{ row.userId }}）</strong>
+            <strong>{{ row.nickname }}（{{ row.displayId }}）</strong>
             <div class="muted">账号状态：{{ row.userStatus === 'ACTIVE' ? '正常' : '已禁用' }}</div>
           </template>
         </el-table-column>

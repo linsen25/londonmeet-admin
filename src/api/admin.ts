@@ -121,6 +121,7 @@ export interface AdminActivity {
 export interface AdminParticipant {
   registrationId: number
   userId: number
+  displayId: string
   nickname: string
   avatarUrl: string
   status: string
@@ -170,8 +171,10 @@ export interface AdminReport {
   activityId: number
   activityTitle: string
   reporterUserId: number
+  reporterDisplayId: string
   reporterName: string
   reportedUserId: number
+  reportedDisplayId: string
   reportedUserName: string
   reason: string
   status: string
@@ -183,6 +186,7 @@ export interface AdminReport {
 export interface AdminUser {
   id: number
   publicId: string
+  displayId: string
   nickname: string
   avatarUrl: string
   status: string
@@ -196,6 +200,7 @@ export interface AdminUser {
 export interface AdminFeedback {
   id: number
   userId: number
+  displayId: string
   nickname: string
   avatarUrl: string
   type?: 'FEEDBACK' | 'ACCOUNT_APPEAL'

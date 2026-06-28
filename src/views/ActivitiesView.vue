@@ -440,7 +440,7 @@ onMounted(load)
               <template #default="{ row }">
                 <div class="participant-user">
                   <el-avatar :src="row.avatarUrl" :size="34">{{ row.nickname?.slice(0, 1) }}</el-avatar>
-                  <div><strong>{{ row.nickname }}</strong><span>ID {{ row.userId }}</span></div>
+                  <div><strong>{{ row.nickname }}</strong><span>ID {{ row.displayId }}</span></div>
                 </div>
               </template>
             </el-table-column>

@@ -65,7 +65,7 @@ onMounted(load)
       <el-table v-loading="loading" :data="rows">
         <el-table-column label="用户" width="180">
           <template #default="{ row }">
-            <div class="user"><el-avatar :src="row.avatarUrl" :size="34" /><div><strong>{{ row.nickname }}</strong><span>ID {{ row.userId }}</span></div></div>
+            <div class="user"><el-avatar :src="row.avatarUrl" :size="34" /><div><strong>{{ row.nickname }}</strong><span>ID {{ row.displayId }}</span></div></div>
           </template>
         </el-table-column>
         <el-table-column prop="subject" label="意见主题" min-width="170" />

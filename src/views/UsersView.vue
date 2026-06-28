@@ -99,7 +99,7 @@ onMounted(load)
           <template #default="{ row }">
             <div class="user-cell">
               <el-avatar :src="row.avatarUrl" />
-              <div><strong>{{ row.nickname }}</strong><span>用户ID {{ row.publicId }}</span></div>
+              <div><strong>{{ row.nickname }}</strong><span>用户ID {{ row.displayId }}</span></div>
             </div>
           </template>
         </el-table-column>
