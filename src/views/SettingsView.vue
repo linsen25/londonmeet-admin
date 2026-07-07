@@ -19,8 +19,8 @@ onMounted(async () => {
   <div v-loading="loading">
     <div class="page-head">
       <div>
-        <h1 class="page-title">系统设置</h1>
-        <p class="page-subtitle">管理后台的数据保留、清理与下载规则。</p>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Manage retention, cleanup and export rules.</p>
       </div>
     </div>
 
@@ -28,37 +28,28 @@ onMounted(async () => {
       <section class="panel setting-card">
         <div class="setting-icon"><el-icon><Clock /></el-icon></div>
         <div>
-          <h3>活动明细保留</h3>
-          <strong>{{ settings?.activityDetailRetentionDays ?? 30 }} 天</strong>
+          <h3>Activity Detail Retention</h3>
+          <strong>{{ settings?.activityDetailRetentionDays ?? 30 }} days</strong>
           <p>{{ settings?.retentionDescription }}</p>
         </div>
       </section>
       <section class="panel setting-card">
         <div class="setting-icon yellow"><el-icon><DataAnalysis /></el-icon></div>
         <div>
-          <h3>数据报告</h3>
-          <strong>按需下载</strong>
+          <h3>Data Reports</h3>
+          <strong>On-demand download</strong>
           <p>{{ settings?.exportDescription }}</p>
         </div>
       </section>
       <section class="panel setting-card">
         <div class="setting-icon green"><el-icon><Lock /></el-icon></div>
         <div>
-          <h3>清理方式</h3>
-          <strong>清理重资源</strong>
-          <p>30天后清理图片、二维码、报名与举报明细，活动骨架和评价永久保留。</p>
+          <h3>Cleanup Mode</h3>
+          <strong>Clean heavy resources</strong>
+          <p>30天后清理图片、二维码、报名与举报明细，活动骨架保留。</p>
         </div>
       </section>
     </div>
-
-    <el-alert
-      class="notice"
-      title="评价记录永久保留，综合评分仅计算最近30天"
-      description="活动详情重资源会在30天后清理；需要完整运营数据时请及时下载Excel。"
-      type="info"
-      :closable="false"
-      show-icon
-    />
   </div>
 </template>
 

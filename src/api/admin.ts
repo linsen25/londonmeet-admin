@@ -23,7 +23,6 @@ export interface DashboardData {
   approvedRegistrationCount: number
   cancelledRegistrationCount: number
   pendingAppealCount: number
-  pendingReviewCount: number
   activityTrend: Array<{ date: string; count: number }>
   dailyTrend: Array<{
     date: string
@@ -48,8 +47,6 @@ export interface ActivityAnalyticsItem {
   joinedGroupCount: number
   groupQrUsers: number
   cancelledCount: number
-  reviewCount: number
-  averageRating?: number
   reportCount: number
   exposureToDetailRate: number
   detailToApplyRate: number
@@ -214,51 +211,6 @@ export interface AdminFeedback {
   handledAt: number
 }
 
-export interface AdminReviewScore {
-  key: string
-  label: string
-  value: number
-}
-
-export interface AdminReview {
-  id: number
-  targetType: 'activity' | 'member'
-  activityId: number
-  activityTitle: string
-  reviewerUserId: number
-  reviewerName: string
-  targetId: number
-  targetName: string
-  overallScore: number
-  scores: AdminReviewScore[]
-  reason?: string
-  batchGood?: boolean
-  status: 'PENDING' | 'NORMAL' | 'EXCLUDED'
-  adminNote: string
-  handledBy?: number
-  handledByName?: string
-  createdAt: number
-  updatedAt: number
-  handledAt?: number
-}
-
-export interface AdminReviewActivity {
-  activityId: number
-  activityTitle: string
-  creatorUserId: number
-  creatorName: string
-  activityAverage?: number
-  activityReviewCount: number
-  memberReviewCount: number
-  pendingCount: number
-  participantCount: number
-  participantReviewedCount: number
-  creatorRecentAverage?: number
-  creatorRecentReviewCount: number
-  creatorRecentDimensions: Record<string, number>
-  endAt: number
-}
-
 export interface PageResult<T> {
   list: T[]
   page: number
@@ -406,27 +358,4 @@ export function fetchAdminFeedback(params: { status?: string; page: number; page
 
 export function handleAdminFeedback(id: number, status: 'RESOLVED' | 'IGNORED', reason: string) {
   return http.post(`/admin/feedback/${id}/handle`, { status, reason })
-}
-
-export function fetchAdminReviewActivities(params: {
-  targetType?: string
-  status?: string
-  keyword?: string
-  page: number
-  pageSize: number
-}) {
-  return http.get<never, PageResult<AdminReviewActivity>>('/admin/review-activities', { params })
-}
-
-export function fetchAdminActivityReviews(activityId: number) {
-  return http.get<never, PageResult<AdminReview>>(`/admin/review-activities/${activityId}`)
-}
-
-export function updateAdminReviewStatus(
-  id: number,
-  status: 'NORMAL' | 'EXCLUDED',
-  reason: string,
-  password: string,
-) {
-  return http.post(`/admin/reviews/${id}/status`, { status, reason, password })
 }

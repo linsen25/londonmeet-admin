@@ -21,21 +21,20 @@ const data = ref<DashboardData | null>(null)
 const periodDays = ref(30)
 
 const cards = computed(() => [
-  { label: '用户总数', value: data.value?.userCount ?? 0, icon: User, tone: 'blue' },
-  { label: '活动总数', value: data.value?.activityCount ?? 0, icon: Calendar, tone: 'violet' },
-  { label: '累计报名', value: data.value?.registrationCount ?? 0, icon: Tickets, tone: 'green' },
-  { label: '待处理举报', value: data.value?.pendingReportCount ?? 0, icon: Flag, tone: 'red' },
+  { label: 'Users', value: data.value?.userCount ?? 0, icon: User, tone: 'blue' },
+  { label: 'Activities', value: data.value?.activityCount ?? 0, icon: Calendar, tone: 'violet' },
+  { label: 'Registrations', value: data.value?.registrationCount ?? 0, icon: Tickets, tone: 'green' },
+  { label: 'Pending Reports', value: data.value?.pendingReportCount ?? 0, icon: Flag, tone: 'red' },
 ])
 
 const periodCards = computed(() => [
-  { label: `近${periodDays.value}天新增用户`, value: data.value?.newUserCount ?? 0 },
-  { label: `近${periodDays.value}天活跃用户`, value: data.value?.activeUserCount ?? 0 },
-  { label: `近${periodDays.value}天新增活动`, value: data.value?.newActivityCount ?? 0 },
-  { label: `近${periodDays.value}天报名`, value: data.value?.periodRegistrationCount ?? 0 },
-  { label: '审核通过', value: data.value?.approvedRegistrationCount ?? 0 },
-  { label: '取消报名', value: data.value?.cancelledRegistrationCount ?? 0 },
-  { label: '待处理申诉', value: data.value?.pendingAppealCount ?? 0 },
-  { label: '待审核低分', value: data.value?.pendingReviewCount ?? 0 },
+  { label: `New users in ${periodDays.value} days`, value: data.value?.newUserCount ?? 0 },
+  { label: `Active users in ${periodDays.value} days`, value: data.value?.activeUserCount ?? 0 },
+  { label: `New activities in ${periodDays.value} days`, value: data.value?.newActivityCount ?? 0 },
+  { label: `Registrations in ${periodDays.value} days`, value: data.value?.periodRegistrationCount ?? 0 },
+  { label: 'Approved', value: data.value?.approvedRegistrationCount ?? 0 },
+  { label: 'Cancelled', value: data.value?.cancelledRegistrationCount ?? 0 },
+  { label: 'Pending Appeals', value: data.value?.pendingAppealCount ?? 0 },
 ])
 
 const trendOption = computed(() => ({
@@ -56,11 +55,11 @@ const trendOption = computed(() => ({
   },
   legend: { top: 0 },
   series: [
-    { name: '新增用户', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.newUsers) ?? [] },
-    { name: '活跃用户', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.activeUsers) ?? [] },
-    { name: '新增活动', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.activities) ?? [] },
-    { name: '报名', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.registrations) ?? [] },
-    { name: '审核通过', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.approved) ?? [] },
+    { name: 'New users', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.newUsers) ?? [] },
+    { name: 'Active users', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.activeUsers) ?? [] },
+    { name: 'New activities', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.activities) ?? [] },
+    { name: 'Registrations', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.registrations) ?? [] },
+    { name: 'Approved', type: 'line', smooth: true, data: data.value?.dailyTrend.map((item) => item.approved) ?? [] },
   ],
 }))
 
@@ -73,11 +72,11 @@ const statusOption = computed(() => ({
     center: ['50%', '45%'],
     label: { show: false },
     data: [
-      { name: '未开始', value: data.value?.upcomingActivityCount ?? 0, itemStyle: { color: '#6c8cff' } },
-      { name: '进行中', value: data.value?.ongoingActivityCount ?? 0, itemStyle: { color: '#24b47e' } },
-      { name: '已结束', value: data.value?.endedActivityCount ?? 0, itemStyle: { color: '#c7ccd6' } },
-      { name: '已隐藏', value: data.value?.hiddenActivityCount ?? 0, itemStyle: { color: '#e15149' } },
-      { name: '已取消', value: data.value?.cancelledActivityCount ?? 0, itemStyle: { color: '#f59e0b' } },
+      { name: 'Upcoming', value: data.value?.upcomingActivityCount ?? 0, itemStyle: { color: '#6c8cff' } },
+      { name: 'Ongoing', value: data.value?.ongoingActivityCount ?? 0, itemStyle: { color: '#24b47e' } },
+      { name: 'Ended', value: data.value?.endedActivityCount ?? 0, itemStyle: { color: '#c7ccd6' } },
+      { name: 'Hidden', value: data.value?.hiddenActivityCount ?? 0, itemStyle: { color: '#e15149' } },
+      { name: 'Cancelled', value: data.value?.cancelledActivityCount ?? 0, itemStyle: { color: '#f59e0b' } },
     ],
   }],
 }))
@@ -101,9 +100,9 @@ async function downloadReport() {
     start.setDate(start.getDate() - periodDays.value + 1)
     const format = (value: Date) => value.toISOString().slice(0, 10)
     await downloadRecentReport(format(start), format(end))
-    ElMessage.success(`近${periodDays.value}天Excel报告已开始下载`)
+    ElMessage.success(`${periodDays.value}-day Excel report download started`)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '下载报告失败')
+    ElMessage.error(error instanceof Error ? error.message : 'Failed to download report')
   } finally {
     downloading.value = false
   }
@@ -114,21 +113,21 @@ async function downloadReport() {
   <div v-loading="loading">
     <div class="page-head">
       <div>
-        <h1 class="page-title">数据概览</h1>
-        <p class="page-subtitle">快速了解用户、活动、报名与举报的整体情况。</p>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Track users, activities, registrations and governance metrics.</p>
       </div>
       <div class="head-actions">
         <el-select v-model="periodDays" style="width: 110px" @change="load">
-          <el-option label="近7天" :value="7" />
-          <el-option label="近30天" :value="30" />
+          <el-option label="7 days" :value="7" />
+          <el-option label="30 days" :value="30" />
         </el-select>
-        <div class="updated"><el-icon><Check /></el-icon> 数据来自当前数据库</div>
+        <div class="updated"><el-icon><Check /></el-icon> Updated just now</div>
         <el-button
           type="primary"
           :icon="Download"
           :loading="downloading"
           @click="downloadReport"
-        >下载近30天Excel</el-button>
+        >Download Excel</el-button>
       </div>
     </div>
 
@@ -152,14 +151,14 @@ async function downloadReport() {
     <div class="chart-grid">
       <section class="panel chart-panel trend-panel">
         <div class="panel-head">
-          <div><h3>近 {{ periodDays }} 天运营趋势</h3><p>用户、活动、报名和审核通过数据</p></div>
+          <div><h3>{{ periodDays }} day trend</h3><p>Daily activity and registration trend</p></div>
         </div>
         <VChart class="chart" :option="trendOption" autoresize />
       </section>
 
       <section class="panel chart-panel">
         <div class="panel-head">
-          <div><h3>活动状态分布</h3><p>按当前时间自动计算</p></div>
+          <div><h3>Activity status</h3><p>Current activity distribution</p></div>
         </div>
         <VChart class="chart" :option="statusOption" autoresize />
       </section>

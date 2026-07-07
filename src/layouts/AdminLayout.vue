@@ -6,7 +6,6 @@ import {
   Expand,
   Fold,
   Message,
-  Star,
   Setting,
   User,
   Warning,
@@ -32,9 +31,9 @@ function logout() {
   <div class="admin-shell">
     <aside class="sidebar" :class="{ collapsed }">
       <div class="brand">
-        <div class="brand-mark">晚</div>
+        <div class="brand-mark">LM</div>
         <div v-if="!collapsed" class="brand-copy">
-          <strong>晚些去哪里呀</strong>
+          <strong>LondonMeet</strong>
           <span>Admin Console</span>
         </div>
       </div>
@@ -50,49 +49,45 @@ function logout() {
       >
         <el-menu-item index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
-          <template #title>数据概览</template>
+          <template #title>鏁版嵁姒傝</template>
         </el-menu-item>
         <el-sub-menu index="/analytics">
           <template #title>
             <el-icon><TrendCharts /></el-icon>
-            <span>数据分析</span>
+            <span>鏁版嵁鍒嗘瀽</span>
           </template>
-          <el-menu-item index="/analytics/activities">活动分析</el-menu-item>
-          <el-menu-item index="/analytics/users">用户分析</el-menu-item>
+          <el-menu-item index="/analytics/activities">娲诲姩鍒嗘瀽</el-menu-item>
+          <el-menu-item index="/analytics/users">鐢ㄦ埛鍒嗘瀽</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/activities">
           <el-icon><Calendar /></el-icon>
-          <template #title>活动管理</template>
+          <template #title>娲诲姩绠＄悊</template>
         </el-menu-item>
         <el-menu-item index="/tags">
           <el-icon><Collection /></el-icon>
-          <template #title>标签管理</template>
+          <template #title>Tags</template>
         </el-menu-item>
         <el-menu-item index="/users">
           <el-icon><User /></el-icon>
-          <template #title>用户管理</template>
+          <template #title>Users</template>
         </el-menu-item>
         <el-menu-item index="/reports">
           <el-icon><Warning /></el-icon>
-          <template #title>治理中心</template>
-        </el-menu-item>
-        <el-menu-item index="/reviews">
-          <el-icon><Star /></el-icon>
-          <template #title>评价管理</template>
+          <template #title>Governance</template>
         </el-menu-item>
         <el-menu-item index="/feedback">
           <el-icon><Message /></el-icon>
-          <template #title>意见箱管理</template>
+          <template #title>Feedback</template>
         </el-menu-item>
         <el-menu-item index="/settings">
           <el-icon><Setting /></el-icon>
-          <template #title>系统设置</template>
+          <template #title>Settings</template>
         </el-menu-item>
       </el-menu>
 
       <button class="collapse-button" @click="collapsed = !collapsed">
         <el-icon><component :is="collapsed ? Expand : Fold" /></el-icon>
-        <span v-if="!collapsed">收起菜单</span>
+        <span v-if="!collapsed">Collapse</span>
       </button>
     </aside>
 
@@ -100,7 +95,7 @@ function logout() {
       <header class="topbar">
         <div>
           <span class="environment-dot"></span>
-          本地开发环境
+          Production
         </div>
         <el-dropdown trigger="click">
           <button class="admin-user">
@@ -109,7 +104,7 @@ function logout() {
           </button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item @click="logout">Logout</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>

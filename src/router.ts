@@ -4,7 +4,6 @@ import ActivitiesView from './views/ActivitiesView.vue'
 import DashboardView from './views/DashboardView.vue'
 import LoginView from './views/LoginView.vue'
 import ReportsView from './views/ReportsView.vue'
-import ReviewsView from './views/ReviewsView.vue'
 import SettingsView from './views/SettingsView.vue'
 import TagsView from './views/TagsView.vue'
 import UsersView from './views/UsersView.vue'
@@ -50,7 +49,6 @@ const routes: RouteRecordRaw[] = [
       { path: 'tags', name: 'tags', component: TagsView },
       { path: 'users', name: 'users', component: UsersView },
       { path: 'reports', name: 'reports', component: ReportsView },
-      { path: 'reviews', name: 'reviews', component: ReviewsView },
       { path: 'feedback', name: 'feedback', component: () => import('./views/FeedbackView.vue') },
       { path: 'settings', name: 'settings', component: SettingsView },
     ],
